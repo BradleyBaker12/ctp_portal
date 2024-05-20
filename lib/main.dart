@@ -1,4 +1,5 @@
 import 'package:ctp_portal/pages/login_page.dart';
+import 'package:ctp_portal/pages/seller%20page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -19,7 +20,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
+  const AuthGate({Key? key});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +51,12 @@ class AuthGate extends StatelessWidget {
             ),
           );
         } else {
-          return const LoginScreen(); // User is not signed in
+          final user = snapshot.data;
+          if (user != null) {
+            return const SellerPage(); // User is signed in
+          } else {
+            return const LoginScreen(); // User is not signed in
+          }
         }
       },
     );

@@ -1,6 +1,8 @@
-import 'package:ctp_portal/pages/login_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ctp_portal/pages/add_seller_page.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ctp_portal/pages/login_page.dart';
 
 class SellerPage extends StatelessWidget {
   final User? user;
@@ -25,87 +27,67 @@ class SellerPage extends StatelessWidget {
           )
         ],
       ),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(
-                'Welcome, ${user?.email ?? 'User'}',
-                style: const TextStyle(
-                    fontSize: 24.0, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20.0),
-              Table(
-                border: TableBorder.all(),
-                children: const [
-                  TableRow(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Sellers',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Dealers',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Salesmen',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Trucks',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Offers',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                  TableRow(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('FAW Dealers'),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('12'),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('50'),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('100'),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('100'),
-                      ),
-                    ],
-                  ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('sellers').snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            List<Map<String, dynamic>> sellersData =
+                snapshot.data!.docs.map((doc) {
+              Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+              return {
+                'name': data['name'] ?? 'N/A',
+                'dealers': data['dealers'] ?? 0,
+                'salesmen': data['salesmen'] ?? 0,
+                'trucks': data['trucks'] ?? 0,
+                'offers': data['offers'] ?? 0,
+              };
+            }).toList();
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: const [
+                  DataColumn(label: Text('Sellers')),
+                  DataColumn(label: Text('Dealers')),
+                  DataColumn(label: Text('Salesmen')),
+                  DataColumn(label: Text('Trucks')),
+                  DataColumn(label: Text('Offers')),
                 ],
+                rows: sellersData.map((seller) {
+                  return DataRow(cells: [
+                    DataCell(Text(seller['name'])),
+                    DataCell(Text(seller['dealers'].toString())),
+                    DataCell(Text(seller['salesmen'].toString())),
+                    DataCell(Text(seller['trucks'].toString())),
+                    DataCell(Text(seller['offers'].toString())),
+                  ]);
+                }).toList(),
               ),
-              const SizedBox(height: 20.0),
-              ElevatedButton(
-                onPressed: () {
-                  // Logic for adding more sellers
-                },
-                child: const Text('Add User'),
-              ),
-            ],
-          ),
+            );
+          },
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddSellerScreen()),
+            );
+          },
+          label: const Text('Add Seller'),
+          icon: const Icon(Icons.add),
+          backgroundColor: Colors.blue,
         ),
       ),
     );
